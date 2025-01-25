@@ -47,6 +47,39 @@ local function create_window()
         "winhl",
         "Normal:HarpoonBorder"
     )
+    local function open_fuzzy_finder()
+        -- Get the content of the buffer
+        local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+
+        -- Use Telescope to fuzzy find the content
+        require('telescope.pickers').new({}, {
+            prompt_title = "Harpoon Commands",
+            finder = require('telescope.finders').new_table({
+                results = lines,
+            }),
+            sorter = require('telescope.config').values.generic_sorter({}),
+            attach_mappings = function(prompt_bufnr, map)
+                -- Define what happens when a selection is made
+                map('i', '<CR>', function()
+                    local selection = require('telescope.actions.state').get_selected_entry()
+                    require('telescope.actions').close(prompt_bufnr)
+
+                    -- Do something with the selected item
+                    vim.api.ndim_win_set_cursor(Harpoon_cmd_win_id, { selection.index, 0 })
+                end)
+                return true
+            end,
+        }):find()
+    end
+
+    -- Add a keybinding to open the fuzzy finder
+    vim.api.nvim_buf_set_keymap(
+        bufnr,
+        'n',
+        '<C-f>',
+        '<cmd>lua open_fuzzy_finder()<CR>',
+        { noremap = true, silent = true }
+    )
 
     return {
         bufnr = bufnr,
